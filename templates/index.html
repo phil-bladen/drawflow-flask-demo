@@ -153,7 +153,7 @@
 
     // Events!
     editor.on('nodeCreated', function(id) {
-      //console.log("Node created " + id);
+      console.log("Node created " + id);
     })
 
     editor.on('nodeRemoved', function(id) {
@@ -179,14 +179,12 @@
       const outputNodeId = connection.output_id;
 
 
-      const inputNode = editor.getNodeFromId(inputNodeId);
-      const outputNode = editor.getNodeFromId(outputNodeId);
+      //const inputNode = editor.getNodeFromId(inputNodeId);
+      //const outputNode = editor.getNodeFromId(outputNodeId);
 
-      if (inputNode.name==="template" || outputNode.name==="template") {
+      if (editor.getNodeFromId(inputNodeId).name==="template" || editor.getNodeFromId(outputNodeId).name==="template") {
           //add to connection array
-
-
-          allConnections.push([inputNode, outputNode]);
+          allConnections.push([inputNodeId, outputNodeId]);
       }
 
 
@@ -248,58 +246,13 @@
      mobile_last_move = event;
    }
 
-   function hasEmptyValues(node) {
-       /**
-        * Returns true if object has empty values in its data JSON object.
-        * This function can help with determining if any nodes in the diagram have blank fields
-        *
-        * Note: Be sure that when objects are initialized, they only contain keys and values which
-        * can be edited by the user while the app runs
-        *       For example, on 1/12 afternoon, we specified that a "github" node should be initialized
-        *       with a data JSON object containing a "field-contents" key and null value "". However, upon
-        *       later inspection, I realized that edits to the text box of github nodes simply creates a new
-        *       adds a new key of "name" with the value of whatever string you type into the text box.
-        *
-        *       As there is no way to edit "field-contents" for github nodes, hasEmptyValues() will always return
-        *       true even if the user has entered text into the github node. We can remedy this by adjusting the following line:
-        *           editor.addNode('telegram', 1, 0, pos_x, pos_y, 'telegram', { "channel": 'channel_3'}, telegrambot );
-        *
-        * Wanted to discuss this issue with Anthony before overwriting previous work.
-        * @type {boolean}
-        */
+    function hasEmptyFields(jsonObj) {
+           const stringTranslation = JSON.stringify(jsonObj);
+           //console.log(stringTranslation);
+           var result = stringTranslation.search('""'); //searches for empty double quotes "" in the string translation of the JSON object
+           return (result != -1); //true if an empty double quote is found
+    }
 
-       var emptyValuesFound = false;
-       nodeDataValues = Object.values(node.data); //generates array containing the values of the data JSON object
-       nodeDataValues.forEach((value) => {
-           if (value === "") {
-               emptyValuesFound = true;
-           }
-       });
-
-       return emptyValuesFound;
-   }
-
-
-   function checkIfNodesFilled(node) {
-       /**
-       * Checks if a node has a non-empty "field-contents" value
-       * field-contents must be created for each node manually ex:
-       *      editor.addNode('github', 0, 1, pos_x, pos_y, 'github', { "field-contents": ''}, githubtemplate );
-       * @param node Node passed
-       * @returns {boolean} True if
-       */
-       var nodeFilled = true;
-
-       if (node.data["field-contents"] === "") {
-              nodeFilled = false;
-       }
-        if (!nodeFilled) {
-            return false;
-        }
-        else {
-            return true;
-        }
-   }
 
    function allowDrop(ev) {
       ev.preventDefault();
@@ -364,7 +317,7 @@
             </div>
           </div>
           `;
-          editor.addNode('github', 0, 1, pos_x, pos_y, 'github', { "field-contents": ''}, githubtemplate );
+          editor.addNode('github', 0, 1, pos_x, pos_y, 'github', { "name": ''}, githubtemplate );
           break;
         case 'telegram':
           var telegrambot = `
@@ -429,13 +382,13 @@
               <div class="title-box"><i class="fas fa-code"></i> Template</div>
               <div class="box">
                 Ger Vars
-                <textarea ></textarea>
+                <textarea df-template ></textarea>
                 Output template with vars
                 <button class="btn btn-primary btn-sm node-click"> CLICK ME!!</button>
               </div>
             </div>
             `;
-            editor.addNode('template', 1, 1, pos_x, pos_y, 'template', { "field-contents": ''}, template );
+            editor.addNode('template', 1, 1, pos_x, pos_y, 'template', { "template": ""}, template );
             break;
           case 'multiple':
             var multiple = `
@@ -532,15 +485,17 @@
 
 $(document).on('click', '.node-click', function () { //Event listener for "CLICK ME!!" (node-click) button on template nodes
     /**
-     * For every connection (as stored in an array of two nodes),
-     * check if the input (index 0) node has a non-empty "field-contents" value
+     * For every connection (as stored in an array of two nodeIds),
+     * check if the input (index 1) node has any fields that must be filled
      */
-    allConnections.forEach((i) => {
-        if (checkIfNodesFilled(i[0])) {
-            console.log("node " + i[0].name + " is filled!");
+    allConnections.forEach((nodeIdPair) => { // i = [2, 1]
+        var lesserNode = editor.getNodeFromId(nodeIdPair[0]);
+        var greaterNode = editor.getNodeFromId(nodeIdPair[1]);
+        if (hasEmptyFields(greaterNode.data)) {
+            console.log("node " + greaterNode.name + " is NOT filled!");
         }
         else {
-            console.log("node " + i[0].name + " is NOT filled!")
+            console.log("node " + greaterNode.name + " is filled!")
         }
     })
 });
@@ -565,6 +520,10 @@ $(document).on('click', '.btn-clear', function () {
 
 
 });
+var sampleString = 'he""llo';
+//console.log(sampleString.search('""'));
+
+
   </script>
 </body>
 </html>
