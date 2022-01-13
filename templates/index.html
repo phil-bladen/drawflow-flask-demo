@@ -248,18 +248,35 @@
      mobile_last_move = event;
    }
 
-   function checkAllDataKVPairs(node) {
-       var nodeFilled = true;
+   function hasEmptyValues(node) {
+       /**
+        * Returns true if object has empty values in its data JSON object.
+        * This function can help with determining if any nodes in the diagram have blank fields
+        *
+        * Note: Be sure that when objects are initialized, they only contain keys and values which
+        * can be edited by the user while the app runs
+        *       For example, on 1/12 afternoon, we specified that a "github" node should be initialized
+        *       with a data JSON object containing a "field-contents" key and null value "". However, upon
+        *       later inspection, I realized that edits to the text box of github nodes simply creates a new
+        *       adds a new key of "name" with the value of whatever string you type into the text box.
+        *
+        *       As there is no way to edit "field-contents" for github nodes, hasEmptyValues() will always return
+        *       true even if the user has entered text into the github node. We can remedy this by adjusting the following line:
+        *           editor.addNode('telegram', 1, 0, pos_x, pos_y, 'telegram', { "channel": 'channel_3'}, telegrambot );
+        *
+        * Wanted to discuss this issue with Anthony before overwriting previous work.
+        * @type {boolean}
+        */
 
-       nodeDataValues = node.data.values(); //generates array containing the values of the data JSON object
+       var emptyValuesFound = false;
+       nodeDataValues = Object.values(node.data); //generates array containing the values of the data JSON object
        nodeDataValues.forEach((value) => {
            if (value === "") {
-               nodeFilled = false;
+               emptyValuesFound = true;
            }
        });
 
-
-
+       return emptyValuesFound;
    }
 
 
