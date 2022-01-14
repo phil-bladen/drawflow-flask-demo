@@ -253,6 +253,134 @@
            return (result != -1); //true if an empty double quote is found
     }
 
+    /*
+    function addFieldsAndPosToJson(jsonObj, node) {
+       jsonObj.input_fields = node.fields;
+       jsonObj.pos_x = node.pos_x;
+       jsonObj.pos_y = node.pos_y;
+    }
+
+     */
+
+    function checkAndRecordNode(nodeObj, visitedNodeIds) {
+       visitedNodeIds.push(nodeObj.id);
+       var jsonData = {
+           "input_fields" : nodeObj.data,
+           "input_nodes" : {},
+           "output_nodes": {},
+           "pos_x": nodeObj.pos_x,
+           "pos_y": nodeObj.pos_y,
+       };
+
+
+        var inputNodeCounter = 0;
+        var inputNodesJson = {};
+        for (input_n in nodeObj.inputs) {
+            nodeObj.inputs[input_n].connections.forEach((connectedNode) =>{
+                const nodeId = connectedNode.node; //.node returns ID. terrible naming by drawflow creators
+                if (visitedNodeIds.includes(nodeId) == false) {
+                    visitedNodeIds.push(nodeId);
+                    const actualNode = editor.getNodeFromId(nodeId);
+                    inputNodesJson[actualNode.name] = checkAndRecordNode(actualNode, visitedNodeIds);
+                }
+            });
+        }
+        jsonData.input_nodes = inputNodesJson; //add inputs to final JSON object
+
+        var outputNodesJson = {};
+        //translate the lines below to get this to work for output
+        for (output_n in nodeObj.outputs) {
+            nodeObj.outputs[output_n].connections.forEach((connectedNode) =>{
+                const nodeId = connectedNode.node; //.node returns ID. terrible naming by drawflow creators
+                if (visitedNodeIds.includes(nodeId) == false) {
+                    visitedNodeIds.push(nodeId);
+                    const actualNode = editor.getNodeFromId(nodeId);
+                    outputNodesJson[actualNode.name] = checkAndRecordNode(actualNode, visitedNodeIds);
+                }
+            });
+        }
+        jsonData.output_nodes = outputNodesJson; //add inputs to final JSON object
+
+
+
+
+        //connection.forEach() //use forEach since this is an array
+
+        /*
+        node.inputs.forEach((input) => {
+            input.forEach((connection) => {
+                if (visitedNodeIds.includes(connection.node === false) ) {
+                    const connectedInputNode = editor.getNodeFromId(connection.node);
+                    jsonData.input_nodes[node.name] = checkAndRecordNode(connectedInputNode, visitedNodeIds); //create a new key with a JSON object as its value
+                } //connection.node stores the nodeID
+            } )
+        })
+
+         */
+
+        /*node.outputs.forEach((output) => {
+            output.forEach((connection) => {
+                if (visitedNodeIds.includes(connection.node === false) ) { //connection.node stores the nodeID
+                    const connectedOutputNode = editor.getNodeFromId(connection.node);
+                    jsonData.output_nodes[node.name] = checkAndRecordNode(connectedOutputNode, visitedNodeIds); //create a new key with a JSON object as its value
+                }
+            } )
+        })
+
+         */
+
+        /*
+       for (var connectedInputNodeId in node.inputs.connections) {
+           if (visitedNodeIds.includes(connectedInputNodeId) === false) {
+               const connectedInputNode = editor.getNodeFromId(connectedInputNodeId);
+               jsonData.input_nodes[node.name] = checkAndRecordNode(connectedInputNode, visitedNodeIds); //create a new key with a JSON object as its value
+
+           }
+
+       }
+
+         */
+
+        /*
+       for (var connectedOutputNodeId in node.outputs.connections) {
+           if (visitedNodeIds.includes(connectedOutputNodeId) === false) {
+               const connectedOutputNode = editor.getNodeFromId(connectedOutputNodeId);
+               jsonData.output_nodes[node.name] = checkAndRecordNode(connectedOutputNode, visitedNodeIds); //create a new key with a JSON object as its value
+
+           }
+
+       }
+
+         */
+
+       return jsonData;
+
+    }
+
+
+    //MAYBE UNCOMMENT THIS AND MAKE THIS THE INITIAL CALLING FUNCTION
+    function nodeToJson(node) {
+       const visitedNodeIds = new Array();
+       //visitedNodeIds.push(node.id)
+        return checkAndRecordNode(node, visitedNodeIds);
+    }
+
+
+
+    /*
+    function helperFieldsAndPos(node) {
+       var returnJSON = {
+
+       }
+    }
+
+    function helperNTJ(node) {
+
+    }
+
+     */
+
+
 
    function allowDrop(ev) {
       ev.preventDefault();
@@ -520,8 +648,6 @@ $(document).on('click', '.btn-clear', function () {
 
 
 });
-var sampleString = 'he""llo';
-//console.log(sampleString.search('""'));
 
 
   </script>
